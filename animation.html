@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tortoise Zoom Animation</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    canvas {
+      border: 2px solid #444;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="tortoiseCanvas" width="800" height="200"></canvas>
+
+  <script>
+    const canvas = document.getElementById('tortoiseCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const tortoiseImg = new Image();
+    tortoiseImg.src = 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Tortoise_1.jpg'; // Replace with another tortoise image if needed
+
+    const TOTAL_DISTANCE = 100; // 100 meters
+    const STAGES = 4;
+
+    let currentStage = 0;
+    let position = 0;
+    let zoomLevel = 1;
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const scale = canvas.width / (TOTAL_DISTANCE / zoomLevel);
+
+      // Draw the track
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height / 2);
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+
+      // Draw markers
+      ctx.fillStyle = '#000';
+      ctx.font = '12px Arial';
+      for (let i = 0; i <= TOTAL_DISTANCE / zoomLevel; i += 10) {
+        const x = i * scale;
+        ctx.beginPath();
+        ctx.moveTo(x, canvas.height / 2 - 10);
+        ctx.lineTo(x, canvas.height / 2 + 10);
+        ctx.stroke();
+        ctx.fillText(`${i * zoomLevel}m`, x + 2, canvas.height / 2 - 12);
+      }
+
+      // Draw tortoise
+      const tortoiseX = position * scale;
+      ctx.drawImage(tortoiseImg, tortoiseX - 20, canvas.height / 2 - 35, 40, 40);
+    }
+
+    function animateStage() {
+      const stageDistance = TOTAL_DISTANCE / Math.pow(2, currentStage + 1);
+      const duration = 1000; // 1 second per stage
+      const startTime = performance.now();
+      const startPosition = position;
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        position = startPosition + stageDistance * t;
+        drawScene();
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          currentStage++;
+          zoomLevel *= 2;
+
+          if (currentStage < STAGES) {
+            setTimeout(animateStage, 500); // short pause before next zoom
+          }
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    tortoiseImg.onload = () => {
+      drawScene();
+      animateStage();
+    };
+  </script>
+</body>
+</html>
